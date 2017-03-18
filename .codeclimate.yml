@@ -50,7 +50,6 @@ exclude_paths:
   - "**.png"
   - "**.jpg"
   - "**.gif"
-  - "gulpfile.js"
   - "composer.lock"
   - "phpcs.xml"
   - "**.json"
