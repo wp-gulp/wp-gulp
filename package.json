@@ -1,36 +1,32 @@
 {
   "name": "WP-Gulp",
   "author": "wp-gulp",
-  "version": "1.0.3",
+  "description": "Gulp script for Developing WordPress Plugins & Themes",
+  "version": "1.0.0",
   "license": "GPL-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/wp-gulp/wp-gulp"
   },
+  "scripts": {
+    "env": "env",
+    "install": "./gulpconf.sh"
+  },
   "dependencies": {},
   "devDependencies": {
-	"autoprefixer": "6.4.1",
+    "autoprefixer": "6.4.1",
     "browser-sync": "2.16.0",
     "gulp": "3.9.1",
-    "gulp-bless": "3.1.0",
     "gulp-clean-css": "2.0.12",
-    "gulp-minify": "0.0.14",
     "gulp-imagemin": "^3.0.3",
+    "gulp-minify": "0.0.14",
     "gulp-postcss": "6.2.0",
     "gulp-rename": "1.2.2",
     "gulp-sass": "2.3.2",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-util": "3.0.7",
     "gulp-watch": "4.3.9",
-    "gulp-zip": "3.2.0"
-    "gulp-concat": "^2.5.2",
-    "gulp-filter": "^4.0.0",
-    "gulp-line-ending-corrector": "^1.0.1",
-    "gulp-merge-media-queries": "^0.2.1",
-    "gulp-notify": "^2.2.0",
-    "gulp-uglify": "^1.5.3",
-    "gulp-uglifycss": "^1.0.6",
-    "gulp-sort": "^2.0.0",
-    "gulp-wp-pot": "^1.2.2"
+    "gulp-zip": "3.2.0",
+    "imforza-cli": "^1.0.0"
   }
 }
