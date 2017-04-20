@@ -2,7 +2,7 @@
   "name": "WP-Gulp",
   "author": "wp-gulp",
   "description": "Gulp script for Developing WordPress Plugins & Themes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "GPL-2.0",
   "repository": {
     "type": "git",
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "env": "env",
-    "install": "./gulpconf.sh"
+    "install": "imforza gulp init"
   },
   "dependencies": {},
   "devDependencies": {
@@ -27,6 +27,6 @@
     "gulp-util": "3.0.7",
     "gulp-watch": "4.3.9",
     "gulp-zip": "3.2.0",
-    "imforza-cli": "^1.0.0"
+    "imforza-cli": "^1.0.12"
   }
 }
