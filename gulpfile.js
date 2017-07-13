@@ -42,17 +42,19 @@ var IMG_SRC  = 'assets/images/*',
 // Zip src and options.
 var ZIP_SRC_ARR = [
   './**',
-  '!./composer.*',
-  '!./gulpfile.js',
-  '!./package.json',
-  '!./README.md',
-  '!./phpcs.xml',
-  '!./phpunit.xml.dist',
-  '!./{node_modules,node_modules/**}',
-  '!./{bin,bin/**}',
+  '!**/composer.*',
+  '!**/gulpfile.js',
+  '!**/package.json',
+  '!**/README.md',
+	'!**/phpcs.xml',
+	'!**/phpcs.ruleset.xml',
+  '!**/phpdoc.dist.xml',
+  '!**/phpunit.xml.dist',
+  '!**/{node_modules,node_modules/**}',
+  '!**/{bin,bin/**}',
   '!./{dist,dist/**}',
   '!./{vendor,vendor/**}',
-  '!./{tests,tests/**}'
+  '!**/{tests,tests/**}'
 ];
 var ZIP_OPTS = { base: '..' };
 
