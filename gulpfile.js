@@ -10,10 +10,16 @@ var gulp      = require('gulp'),
     autoprefixer = require('autoprefixer'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
+		request   = require('request'),
+		spawn_shell = require('spawn-shell'),
+		fs   = require('fs'),
 		imagemin 		 = require('gulp-imagemin');
+
+		var exec = require('child_process').exec;
 
 // me.js contains vars to your specific setup
 var me = require('./gulpconf.js');
+var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/usr/local/bin' });
 
 var WEBSITE   = me.WEBSITE;
 var CONTENT_TYPE = me.CONTENT_TYPE;
@@ -163,3 +169,52 @@ gulp.task('zip', function(){
     .pipe( zip( BASE_NAME + '.zip' ) )
     .pipe( gulp.dest('dist') );
 });
+
+/**
+ * Initializes dev dependencies.
+ */
+gulp.task('init',['wp-enforcer'], function(){
+	return request('https://gist.githubusercontent.com/sfgarza/32258b7332a715de4e3948892ba415d3/raw/8a499cfe32749f4cabe2f6fe0d95653ce98e14e2/pre-commit-gulp.bash').pipe(fs.createWriteStream('.git/hooks/pre-commit'));
+});
+
+
+/**
+ * Runs composer install.
+ */
+gulp.task('composer', function(cb) {
+  //Install composer packages
+  return shell_exec('composer install', cb );
+});
+
+/**
+ * Runs composer update
+ */
+gulp.task('composer-update', function(cb) {
+  //Install composer packages
+  return shell_exec('composer update', cb );
+});
+
+/**
+ * Installs wp-enforcer
+ */
+gulp.task('wp-enforcer', ['composer'], function(cb){
+	return shell_exec('./vendor/bin/wp-enforcer', cb );
+});
+
+
+/**
+ * Execute Shell script within node.
+ *
+ * Not currently being used.
+ * @param  {String}   command  : Command to execute.
+ * @param  {Function} callback : Callback function.
+ * @return {Function}          : Callback function.
+ */
+function shell_exec( command, callback ){
+  // Execute bash script.
+  // command = path.join( __dirname , '/scripts/gulpconf.sh');
+  shell = spawn_shell(command, { shell: '/bin/bash', env: environment });
+  shell.on('exit', function(data){
+    return callback();
+  });
+}
