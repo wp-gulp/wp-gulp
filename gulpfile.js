@@ -7,12 +7,20 @@ var gulp      = require('gulp'),
     postcss   = require('gulp-postcss'),
     sass      = require('gulp-sass'),
     zip       = require('gulp-zip'),
+		prompt 	  = require('gulp-prompt'),
+		git 	    = require('gulp-git'),
+		request   = require('request'),
+		shell     = require('shelljs'),
+		semver    = require('semver'), // Versioning standard - http://semver.org/
+		fs        = require('fs'),
+		asynclib  =  require('async'),
+		colors    = require('colors'),
+		rmdir	    = require('rmdir'),
+		glob	    = require('glob'),
     autoprefixer = require('autoprefixer'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
-		request   = require('request'),
-		spawn_shell = require('spawn-shell'),
-		fs   = require('fs'),
+		spawn_shell  = require('spawn-shell'),
 		imagemin 		 = require('gulp-imagemin');
 
 		var exec = require('child_process').exec;
@@ -24,6 +32,7 @@ var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/u
 var WEBSITE   = me.WEBSITE;
 var CONTENT_TYPE = me.CONTENT_TYPE;
 var BASE_NAME = __dirname.match(/([^\/]*)\/*$/)[1];
+const TAG_REGEX = /^[ \t\/*#@]*version:(.*)$/mi;
 
 // JS source, destination, and excludes.
 var JS_EXCLD  = '!assets/js/*.min.js',
@@ -201,6 +210,104 @@ gulp.task('wp-enforcer', ['composer'], function(cb){
 	return shell_exec('./vendor/bin/wp-enforcer', cb );
 });
 
+gulp.task('clean', function(){
+	rmdir('./dist');
+});
+
+gulp.task('tag',['current_version', 'current_branch'], function(){
+	gulp.src( base_file )
+    .pipe(prompt.prompt({
+        type: 'list',
+        name: 'bump',
+        message: 'What kind of release would you like to make?',
+        choices: ['patch', 'minor', 'major']
+    }, function(res){
+			asynclib.waterfall([
+	      function(callback){
+	        callback(null, res.bump);
+	      },
+	      git_bump,
+				git_push,
+				git_tag,
+				git_push
+	    ], function (err, result) {
+	      if( null !== err ){
+	        console.log('ERROR: %j', err);
+	      }
+	    });
+    }));
+})
+
+gulp.task('current_version', function( cb ){
+	 glob('*.php', function(err, items) {
+		if (err){
+			console.error( (err.message).red );
+		}
+    for (var i=0; i<items.length; i++) {
+			head = shell.head( {'-n':30}, items[i] );
+			found = head.match( TAG_REGEX )
+			if( null !== found ){
+				current_version = found[1];
+				base_file = items[i];
+				console.log(('Current version: ' + current_version).green );
+				return cb();
+			}
+    }
+	});
+})
+
+gulp.task('current_branch', function( cb ){
+	git.revParse({args:'--abbrev-ref HEAD', quiet:true}, function (err, hash) {
+		if (err){
+			console.error( (err.message).red );
+			return cb();
+		}
+		else{
+			current_branch = hash;
+			console.log(('Current branch: ' + current_branch).green );
+			return cb();
+		}
+	});
+});
+
+/*******************************************************************************
+ *                                Functions
+ ******************************************************************************/
+function git_bump(bump,callback){
+	new_version = semver.inc( current_version, bump )
+	shell.sed( '-i', TAG_REGEX, '* Version: ' + new_version, base_file );
+	console.log(('New version: ' + new_version).green );
+	gulp.src( '.' )
+		.pipe(git.add({args: '--all'}))
+		.pipe(git.commit('Bumping version number'));
+	return callback(null, current_branch);
+}
+
+function git_tag(callback){
+	git.tag(new_version, 'Release' + new_version, {quiet:false}, function (err) {
+		if (err){
+			console.error( (err.message).red );
+			console.error( 'Reverting changes...'.yellow );
+			shell.sed( '-i', TAG_REGEX, ' * Version: ' + current_version, base_file );
+			return callback(err)
+		}
+		else{
+			return callback(null, '--tags')
+		}
+	});
+}
+
+function git_push( branch, callback ){
+	git.push('origin', branch, function (err) {
+		if (err){
+			console.error( (err.message).red );
+			return callback(err);
+		}
+		else{
+			return callback(null);
+		}
+	});
+}
 
 /**
  * Execute Shell script within node.

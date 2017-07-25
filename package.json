@@ -14,13 +14,18 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "async": "^2.5.0",
     "autoprefixer": "6.4.1",
     "browser-sync": "2.16.0",
+    "colors": "^1.1.2",
+    "glob": "^7.1.2",
     "gulp": "3.9.1",
     "gulp-clean-css": "2.0.12",
+    "gulp-git": "^2.4.1",
     "gulp-imagemin": "^3.0.3",
     "gulp-minify": "0.0.14",
     "gulp-postcss": "6.2.0",
+    "gulp-prompt": "^0.2.0",
     "gulp-rename": "1.2.2",
     "gulp-sass": "2.3.2",
     "gulp-sourcemaps": "^1.6.0",
@@ -29,6 +34,9 @@
     "gulp-zip": "3.2.0",
     "imforza-cli": "^1.0.14",
     "request": "^2.81.0",
+    "rmdir": "^1.2.0",
+    "semver": "^5.4.1",
+    "shelljs": "^0.7.8",
     "spawn-shell": "^2.0.1"
   }
 }
