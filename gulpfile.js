@@ -21,12 +21,19 @@ var gulp      = require('gulp'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
 		spawn_shell  = require('spawn-shell'),
-		imagemin 		 = require('gulp-imagemin');
-
-		var exec = require('child_process').exec;
+		imagemin 		 = require('gulp-imagemin'),
+    exec         = require('child_process').exec;
 
 // me.js contains vars to your specific setup
-var me = require('./gulpconf.js');
+
+var me;
+
+try{
+  me = require('./gulpconf.js');
+}catch(e){
+  me = false;
+}
+
 var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/usr/local/bin' });
 
 var WEBSITE   = me.WEBSITE;
