@@ -21,19 +21,17 @@ var gulp      = require('gulp'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
 		spawn_shell  = require('spawn-shell'),
-		imagemin 		 = require('gulp-imagemin'),
-    exec         = require('child_process').exec;
+		imagemin 		 = require('gulp-imagemin');
+
+var exec = require('child_process').exec;
 
 // me.js contains vars to your specific setup
-
-var me;
-
-try{
-  me = require('./gulpconf.js');
-}catch(e){
-  me = false;
+if( ! fs.existsSync('./gulpconf.js' ) ){
+	console.log('Please create gulpconf.js file by running. '.red + '"npm install"'.yellow );
+	process.exit();
 }
 
+var me = require('./gulpconf.js');
 var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/usr/local/bin' });
 
 var WEBSITE   = me.WEBSITE;
@@ -65,17 +63,19 @@ var IMG_SRC  = 'assets/images/*',
 var ZIP_SRC_ARR = [
   './**',
   '!**/composer.*',
-  '!**/gulpfile.js',
+	'!**/gulpfile.js',
+  '!**/gulpconf.js',
   '!**/package.json',
   '!**/README.md',
-	'!**/phpcs.xml',
-	'!**/phpcs.ruleset.xml',
+  '!**/phpcs.xml',
+  '!**/phpcs.ruleset.xml',
   '!**/phpdoc.dist.xml',
   '!**/phpunit.xml.dist',
   '!**/{node_modules,node_modules/**}',
   '!**/{bin,bin/**}',
-  '!./{dist,dist/**}',
-  '!./{vendor,vendor/**}',
+  '!**/{dist,dist/**}',
+	'!**/{vendor,vendor/**}',
+  '!**/{docs,docs/**}',
   '!**/{tests,tests/**}'
 ];
 var ZIP_OPTS = { base: '..' };
@@ -284,10 +284,12 @@ function git_bump(bump,callback){
 	new_version = semver.inc( current_version, bump )
 	shell.sed( '-i', TAG_REGEX, '* Version: ' + new_version, base_file );
 	console.log(('New version: ' + new_version).green );
+
 	gulp.src( '.' )
 		.pipe(git.add({args: '--all'}))
-		.pipe(git.commit('Bumping version number'));
-	return callback(null, current_branch);
+		.pipe(git.commit('Bumping version number',function(){
+			return callback(null, current_branch);
+		}));
 }
 
 function git_tag(callback){
