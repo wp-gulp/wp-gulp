@@ -2,10 +2,20 @@
 var gulp      = require('gulp'),
     minify    = require('gulp-minify'),
     watch     = require('gulp-watch'),
-    cleanCSS  = require('gulp-clean-css'),
     rename    = require('gulp-rename'),
+    
+    // CSS related plugins.
+    cleanCSS  = require('gulp-clean-css'),
     postcss   = require('gulp-postcss'),
     sass      = require('gulp-sass'),
+    autoprefixer = require('autoprefixer'),
+    
+    // JS related plugins.
+    
+    // Image realted plugins.
+    imagemin  = require('gulp-imagemin');
+    
+    // Utility related plugins.
     zip       = require('gulp-zip'),
 		prompt 	  = require('gulp-prompt'),
 		git 	    = require('gulp-git'),
@@ -17,11 +27,11 @@ var gulp      = require('gulp'),
 		colors    = require('colors'),
 		rmdir	    = require('rmdir'),
 		glob	    = require('glob'),
-    autoprefixer = require('autoprefixer'),
+    
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
 		spawn_shell  = require('spawn-shell'),
-		imagemin 		 = require('gulp-imagemin');
+		
 
 var exec = require('child_process').exec;
 
