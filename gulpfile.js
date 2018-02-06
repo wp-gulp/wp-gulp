@@ -10,6 +10,7 @@ var gulp      = require('gulp'),
     sass      = require('gulp-sass'),
     autoprefixer = require('autoprefixer'),
     var pxtorem = require('gulp-pxtorem');
+    var cmq = require('gulp-combine-media-queries');
     
     // JS related plugins.
     
