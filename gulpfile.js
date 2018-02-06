@@ -9,11 +9,16 @@ var gulp      = require('gulp'),
     postcss   = require('gulp-postcss'),
     sass      = require('gulp-sass'),
     autoprefixer = require('autoprefixer'),
+    var pxtorem = require('gulp-pxtorem');
     
     // JS related plugins.
     
     // Image realted plugins.
     imagemin  = require('gulp-imagemin');
+    
+    // Translation related plugins.
+    var wpPot = require('gulp-wp-pot'); // For generating the .pot file.
+	var sort  = require('gulp-sort'); // Recommended to prevent unnecessary changes in pot-file.
     
     // Utility related plugins.
     zip       = require('gulp-zip'),
