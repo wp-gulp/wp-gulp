@@ -33,6 +33,9 @@ var gulp      = require('gulp'),
 		colors    = require('colors'),
 		rmdir	    = require('rmdir'),
 		glob	    = require('glob'),
+		
+		// var cloudflare = require("gulp-cloudflare");
+		// var reporter = reuqire('gulp-codeclimate-reporter');
     
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
