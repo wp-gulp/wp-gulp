@@ -36,6 +36,7 @@ var gulp      = require('gulp'),
 		
 		// var cloudflare = require("gulp-cloudflare");
 		// var reporter = reuqire('gulp-codeclimate-reporter');
+		// https://www.npmjs.com/package/gulp-gcloud
     
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
