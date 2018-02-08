@@ -6,9 +6,9 @@ var gulp      = require('gulp'),
     cleanCSS  = require('gulp-clean-css'),
     postcss   = require('gulp-postcss'),
     sass      = require('gulp-sass'),
-    autoprefixer = require('autoprefixer'), 
+    autoprefixer = require('autoprefixer'),
     // JS modules.
-    minify    = require('gulp-minify'),  
+    minify    = require('gulp-minify'),
     // Image modules.
     imagemin  = require('gulp-imagemin'),
     // Translation modules.
@@ -27,12 +27,13 @@ var gulp      = require('gulp'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
 		phpcbf = require('gulp-phpcbf'),
+		phpcs = require('gulp-phpcs'),
 		clean = require('gulp-clean'),
     log = require('fancy-log'),
     shell     = require('shelljs'),
     spawn_shell  = require('spawn-shell'),
     exec = require('child_process').exec;
-    
+
     // var reporter = reuqire('gulp-codeclimate-reporter');
     // const gcPub = require('gulp-gcloud');
     // var pxtorem = require('gulp-pxtorem');
@@ -135,6 +136,7 @@ gulp.task('js-watch', ['build-js'], function(){
  */
 gulp.task('build-sass', function() {
   gulp.src( SASS_SRC )
+		.pipe(sort())
 		.pipe(sourcemaps.init())
     .pipe(sass().on('error', sass.logError))
 		.pipe(postcss([
@@ -163,6 +165,7 @@ gulp.task('build-sass', function() {
  */
 gulp.task('build-js', function(){
   gulp.src( [ JS_SRC, JS_EXCLD ] )
+		.pipe(sort())
     .pipe(minify({
       ext:{
         src:'.js',
@@ -175,6 +178,7 @@ gulp.task('build-js', function(){
 
 gulp.task('build-img', function(){
 	gulp.src('assets/images/*')
+		.pipe(sort())
     .pipe(imagemin())
     .pipe(gulp.dest('assets/images'));
 });
@@ -184,7 +188,7 @@ gulp.task('build-img', function(){
  *
  * CMD: gulp build
  */
-gulp.task('build', ['build-sass','build-js', 'build-img', 'phpcbf']);
+gulp.task('build', ['translate', 'build-sass','build-js', 'build-img', 'phpcbf', 'phpcs'] );
 
 /**
  * Creates a zip file of the current project without any of the config and dev
@@ -311,9 +315,8 @@ gulp.task('base-dir', function( cb ){
 });
 
 gulp.task('phpcbf', ['base-dir'], function(){
-  exec('git diff --name-only --diff-filter=ACM -- \'*.php\'', {cwd: process.cwd()}, function(err, stdout) {
+	diff_files( function( err, files ){
     if (err) return err;
-		let files =  stdout.trim().split("\n");
 
 		return gulp.src(files)
 			.pipe(phpcbf({
@@ -324,6 +327,20 @@ gulp.task('phpcbf', ['base-dir'], function(){
         return file.base;
     	}));
   });
+});
+
+gulp.task('phpcs', ['base-dir'], function () {
+	diff_files( function( err, files ){
+		if( err ){ throw err; }
+
+		return gulp.src( files )
+        // Validate files using PHP Code Sniffer
+        .pipe(phpcs({
+            bin: base_dir +'/vendor/bin/phpcs'
+        }))
+        // Log all problems that was found
+        .pipe(phpcs.reporter('log'));
+	});
 });
 
 /**
@@ -343,6 +360,12 @@ gulp.task('release', ['current_version','current_branch'], function(cb) {
 			 });
     }));
 });
+
+gulp.task('translate', function(){
+  return gulp.src( PHP_SRC )
+        .pipe(wpPot( ))
+        .pipe(gulp.dest('languages/'+BASE_NAME+'.pot'));
+})
 
 /*******************************************************************************
  *                                Functions
@@ -432,4 +455,12 @@ function shell_exec( command, callback ){
 function download_file( url, path, opts, cb ){
 	request( url )
 	 .pipe(fs.createWriteStream( path, opts).on('finish', cb ));
+}
+
+function diff_files( callback ){
+	exec('git diff --name-only --diff-filter=ACM -- \'*.php\'', {cwd: process.cwd()}, function(err, stdout) {
+		if (err) return callback(err);
+
+		return callback( null, stdout.trim().split("\n") );
+	});
 }
