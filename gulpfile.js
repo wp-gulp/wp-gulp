@@ -1,31 +1,37 @@
 // Require all dev dependencies.
 var gulp      = require('gulp'),
-    minify    = require('gulp-minify'),
     watch     = require('gulp-watch'),
-    cleanCSS  = require('gulp-clean-css'),
     rename    = require('gulp-rename'),
+    // CSS modules.
+    cleanCSS  = require('gulp-clean-css'),
     postcss   = require('gulp-postcss'),
     sass      = require('gulp-sass'),
+    autoprefixer = require('autoprefixer'), 
+    // JS modules.
+    minify    = require('gulp-minify'),  
+    // Image modules.
+    imagemin  = require('gulp-imagemin'),
+    // Translation modules.
+    wpPot = require('gulp-wp-pot'), // For generating the .pot file.
+	  sort  = require('gulp-sort'), // Recommended to prevent unnecessary changes in pot-file.
+    // Utility modules.
     zip       = require('gulp-zip'),
 		prompt 	  = require('gulp-prompt'),
 		git 	    = require('gulp-git'),
 		request   = require('request'),
-		shell     = require('shelljs'),
 		semver    = require('semver'), // Versioning standard - http://semver.org/
 		fs        = require('fs'),
 		asynclib  =  require('async'),
 		colors    = require('colors'),
 		glob	    = require('glob'),
-    autoprefixer = require('autoprefixer'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
-		spawn_shell  = require('spawn-shell'),
 		phpcbf = require('gulp-phpcbf'),
 		clean = require('gulp-clean'),
     log = require('fancy-log'),
-		imagemin 		 = require('gulp-imagemin');
-
-var exec = require('child_process').exec;
+    shell     = require('shelljs'),
+    spawn_shell  = require('spawn-shell'),
+    exec = require('child_process').exec;
 
 // me.js contains vars to your specific setup
 if( ! fs.existsSync('./gulpconf.js' ) ){
