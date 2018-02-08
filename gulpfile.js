@@ -236,7 +236,7 @@ gulp.task('wp-enforcer', ['clean', 'composer-install'], function(cb){
 });
 
 gulp.task('clean', function(){
-	return gulp.src(['./dist/*', '.git/hooks/*' ], { read: false })
+	return gulp.src(['./dist/*', '.git/hooks/+(post-merge|pre-commit)' ], { read: false })
 			 .pipe(clean());
 });
 
