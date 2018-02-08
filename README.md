@@ -18,13 +18,19 @@ Install the imforza-cli tool by running `npm install imforza-cli -g`. Then trave
 ## Usage
 
 - `gulp` - Proxies your local development site through [browsersync](https://browsersync.io/).
+- `gulp init` - Initializes local environment, Install composer, wp-enforcer, and the pre-commit & post-merge hooks.
 - `gulp build-sass` - Compiles & minifies sass files.
 - `gulp build-js` - Minifies Javascript files.
 - `gulp build-img` - Compresses image files
-- `gulp build` - An alias for running build-sass, build-js, and build-img consecutively.
-- `gulp tag` - Creates a tag of the current project state on GitHub.
-- `gulp zip` - Creates a zip file of your plugin or theme so that it can be manually installed on WordPress. Output is located in the `./dist/` directory
-- `gulp composer` - Runs the `composer install` command.
+- `gulp translate` - Creates a .pot file of translatable strings found in the source code.
+- `gulp phpcs` - Runs PHP Code Sniffer on all recently modified files.
+- `gulp phpcbf` - Runs PHP Code Beautifier on all recently modified files.
+- `gulp build` - An alias for running  the 'translate', 'build-sass', 'build-js', 'build-img', 'phpcbf',  & 'phpcs' gulp tasks all at once.
+- `gulp composer-install` - Runs the `composer install` command.
 - `gulp composer-update` - Runs the `composer update` command.
 - `gulp wp-enforcer` - Installs wp-enforcer on your project.
-- `gulp clean` - Cleans the contents for your `./dist/` directory.
+- `gulp clean` - Deletes the `pre-commit` & `post-merge` git hooks as well as the contents of the `./dist/` directory.
+- `gulp tag` - Creates a tag of the current project state on GitHub.
+- `gulp zip` - Creates a zip file of your plugin or theme so that it can be manually installed on WordPress. Output is located in the `./dist/` directory
+- `gulp release` - Tags the code, updates the version number and uploads a release to GitHub.
+
