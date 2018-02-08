@@ -32,5 +32,6 @@ Install the imforza-cli tool by running `npm install imforza-cli -g`. Then trave
 - `gulp clean` - Deletes the `pre-commit` & `post-merge` git hooks as well as the contents of the `./dist/` directory.
 - `gulp tag` - Creates a tag of the current project state on GitHub.
 - `gulp zip` - Creates a zip file of your plugin or theme so that it can be manually installed on WordPress. Output is located in the `./dist/` directory
-- `gulp release` - Tags the code, updates the version number and uploads a release to GitHub.
-
+- `gulp release` - Tags the code, updates the version number and uploads a release to GitHub. 
+    - **NOTE**: For releases to work, you will need to create [GitHub Access Token](https://github.com/blog/1509-personal-api-tokens) and export it to your local environment by placing it in your `.profile`, `.bash_profile`, or `.bashrc` file.
+    -  i.e) `export GITHUB_TOKEN="f941e0..."`
