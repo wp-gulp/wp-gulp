@@ -32,6 +32,9 @@ var gulp      = require('gulp'),
     shell     = require('shelljs'),
     spawn_shell  = require('spawn-shell'),
     exec = require('child_process').exec;
+    
+    // var reporter = reuqire('gulp-codeclimate-reporter');
+    // const gcPub = require('gulp-gcloud');
 
 // me.js contains vars to your specific setup
 if( ! fs.existsSync('./gulpconf.js' ) ){
