@@ -15,12 +15,14 @@ var gulp      = require('gulp'),
 		fs        = require('fs'),
 		asynclib  =  require('async'),
 		colors    = require('colors'),
-		rmdir	    = require('rmdir'),
 		glob	    = require('glob'),
     autoprefixer = require('autoprefixer'),
     browserSync  = require('browser-sync').create(),
 		sourcemaps   = require('gulp-sourcemaps'),
 		spawn_shell  = require('spawn-shell'),
+		phpcbf = require('gulp-phpcbf'),
+		clean = require('gulp-clean'),
+    log = require('fancy-log'),
 		imagemin 		 = require('gulp-imagemin');
 
 var exec = require('child_process').exec;
@@ -168,11 +170,11 @@ gulp.task('build-img', function(){
 });
 
 /**
- * Executes all of the build tasks in the correct sequence.
+ * Executes all of the build tasks at once.
  *
  * CMD: gulp build
  */
-gulp.task('build', ['build-sass','build-js', 'build-img']);
+gulp.task('build', ['build-sass','build-js', 'build-img', 'phpcbf']);
 
 /**
  * Creates a zip file of the current project without any of the config and dev
@@ -189,15 +191,21 @@ gulp.task('zip', function(){
 /**
  * Initializes dev dependencies.
  */
-gulp.task('init',['wp-enforcer'], function(){
-	return request('https://gist.githubusercontent.com/sfgarza/32258b7332a715de4e3948892ba415d3/raw/8a499cfe32749f4cabe2f6fe0d95653ce98e14e2/pre-commit-gulp.bash').pipe(fs.createWriteStream('.git/hooks/pre-commit'));
-});
+gulp.task('init', ['init-git-hooks'] );
 
+gulp.task('init-git-hooks', ['wp-enforcer'], function(cb){
+	download_file( 'https://gist.githubusercontent.com/sfgarza/32258b7332a715de4e3948892ba415d3/raw', '.git/hooks/pre-commit', { mode: 0o755 }, function(){
+		download_file( 'https://gist.githubusercontent.com/sfgarza/a515ceffa2f414adbb95f556fcfbce34/raw', '.git/hooks/post-merge', { mode: 0o755 }, function(){
+			log('Git Hooks installed');
+			return cb();
+		} );
+	} );
+});
 
 /**
  * Runs composer install.
  */
-gulp.task('composer', function(cb) {
+gulp.task('composer-install', function(cb) {
   //Install composer packages
   return shell_exec('composer install', cb );
 });
@@ -213,12 +221,13 @@ gulp.task('composer-update', function(cb) {
 /**
  * Installs wp-enforcer
  */
-gulp.task('wp-enforcer', ['composer'], function(cb){
+gulp.task('wp-enforcer', ['clean', 'composer-install'], function(cb){
 	return shell_exec('./vendor/bin/wp-enforcer', cb );
 });
 
 gulp.task('clean', function(){
-	rmdir('./dist');
+	return gulp.src(['./dist/*', '.git/hooks/*' ], { read: false })
+			 .pipe(clean());
 });
 
 gulp.task('tag',['current_version', 'current_branch'], function(){
@@ -239,14 +248,16 @@ gulp.task('tag',['current_version', 'current_branch'], function(){
 				git_push
 	    ], function (err, result) {
 	      if( null !== err ){
-	        console.log('ERROR: %j', err);
+	        log('ERROR: %j', err);
 	      }
 	    });
     }));
 })
 
 gulp.task('current_version', function( cb ){
-	 glob('*.php', function(err, items) {
+	let pattern = ('plugin' === CONTENT_TYPE) ? '*.php' : 'style.css';
+
+	 glob( pattern , function(err, items) {
 		if (err){
 			console.error( (err.message).red );
 		}
@@ -256,7 +267,7 @@ gulp.task('current_version', function( cb ){
 			if( null !== found ){
 				current_version = found[1];
 				base_file = items[i];
-				console.log(('Current version: ' + current_version).green );
+				log(('Current version: ' + current_version).green );
 				return cb();
 			}
     }
@@ -271,19 +282,71 @@ gulp.task('current_branch', function( cb ){
 		}
 		else{
 			current_branch = hash;
-			console.log(('Current branch: ' + current_branch).green );
 			return cb();
 		}
 	});
 });
 
+gulp.task('base-dir', function( cb ){
+	git.revParse({args:'--show-toplevel', quiet:true}, function (err, dir) {
+		if (err){
+			console.error( (err.message).red );
+			return cb();
+		}
+		else{
+			base_dir = dir;
+			return cb();
+		}
+	});
+});
+
+gulp.task('phpcbf', ['base-dir'], function(){
+  exec('git diff --name-only --diff-filter=ACM -- \'*.php\'', {cwd: process.cwd()}, function(err, stdout) {
+    if (err) return err;
+		let files =  stdout.trim().split("\n");
+
+		return gulp.src(files)
+			.pipe(phpcbf({
+				bin: base_dir +'/vendor/bin/phpcbf'
+			}))
+			.on('error', console.error )
+			.pipe(gulp.dest(function (file) {
+        return file.base;
+    	}));
+  });
+});
+
+/**
+ * Uploads a release to github.
+ */
+gulp.task('release', ['current_version','current_branch'], function(cb) {
+
+	gulp.src( base_file )
+    .pipe(prompt.prompt({
+        type: 'list',
+        name: 'bump',
+        message: 'What kind of release would you like to make?',
+        choices: ['patch', 'minor', 'major']
+    }, function(res){
+			 git_bump(res.bump,function(){
+				 return shell_exec( "npm run release "  + res.bump , cb );
+			 });
+    }));
+});
+
 /*******************************************************************************
  *                                Functions
  ******************************************************************************/
+ /**
+  * [git_bump description]
+  * @param  {[type]}   bump     [description]
+  * @param  {Function} callback [description]
+  * @return {[type]}            [description]
+  */
 function git_bump(bump,callback){
 	new_version = semver.inc( current_version, bump )
 	shell.sed( '-i', TAG_REGEX, '* Version: ' + new_version, base_file );
-	console.log(('New version: ' + new_version).green );
+	log(('New version: ' + new_version).green );
 
 	gulp.src( '.' )
 		.pipe(git.add({args: '--all'}))
@@ -292,6 +355,11 @@ function git_bump(bump,callback){
 		}));
 }
 
+/**
+ * Git tag
+ * @param  {Function} callback Callback function.
+ * @return {Function}          Callback function.
+ */
 function git_tag(callback){
 	git.tag(new_version, 'Release' + new_version, {quiet:false}, function (err) {
 		if (err){
@@ -306,6 +374,13 @@ function git_tag(callback){
 	});
 }
 
+/**
+ * Git push to a branch.
+ *
+ * @param  {String}   branch   Branch to push to.
+ * @param  {Function} callback Callback function.
+ * @return {Function}          Callback function.
+ */
 function git_push( branch, callback ){
 	git.push('origin', branch, function (err) {
 		if (err){
@@ -333,4 +408,18 @@ function shell_exec( command, callback ){
   shell.on('exit', function(data){
     return callback();
   });
+}
+
+/**
+ * Download file into specific dir.
+ *
+ * @param  {String}   url  URL of file to download.
+ * @param  {String}   path Local path to file.
+ * @param  {Mixed}    opts Options
+ * @param  {Function} cb   Callback function.
+ * @return {Function}      Callback function.
+ */
+function download_file( url, path, opts, cb ){
+	request( url )
+	 .pipe(fs.createWriteStream( path, opts).on('finish', cb ));
 }

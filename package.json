@@ -10,20 +10,24 @@
   },
   "scripts": {
     "env": "env",
-    "install": "imforza gulp config && gulp init"
+    "install": "imforza gulp config && gulp init",
+    "release": "release-it"
   },
   "dependencies": {},
   "devDependencies": {
     "async": "^2.5.0",
     "autoprefixer": "^7.2.5",
     "browser-sync": "^2.23.6",
-    "gulp": "^3.9.1",
-    "gulp-clean-css": "^3.9.2",
     "colors": "^1.1.2",
+    "fancy-log": "^1.3.2",
     "glob": "^7.1.2",
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.4.0",
+    "gulp-clean-css": "^3.9.2",
     "gulp-git": "^2.5.1",
     "gulp-imagemin": "^4.1.0",
     "gulp-minify": "^2.1.0",
+    "gulp-phpcbf": "^0.1.2",
     "gulp-postcss": "^7.0.1",
     "gulp-prompt": "^1.0.1",
     "gulp-rename": "^1.2.2",
@@ -33,8 +37,8 @@
     "gulp-watch": "^5.0.0",
     "gulp-zip": "^4.1.0",
     "imforza-cli": "^1.0.20",
+    "release-it": "^6.2.0",
     "request": "^2.81.0",
-    "rmdir": "^1.2.0",
     "semver": "^5.5.0",
     "shelljs": "^0.8.1",
     "spawn-shell": "^2.0.1"
