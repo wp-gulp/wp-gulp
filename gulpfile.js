@@ -15,6 +15,7 @@ var gulp      = require('gulp'),
     wpPot = require('gulp-wp-pot'), // For generating the .pot file.
 	  sort  = require('gulp-sort'), // Recommended to prevent unnecessary changes in pot-file.
     // Utility modules.
+    argv      = require('yargs').argv,
     zip       = require('gulp-zip'),
 		prompt 	  = require('gulp-prompt'),
 		git 	    = require('gulp-git'),
@@ -95,7 +96,8 @@ var ZIP_OPTS = { base: '..' };
 
 // PHP Source.
 var PHP_SRC = '**/*.php';
-
+var stagedFlag = ( argv.staged === undefined) ? false : true;
+console.log(stagedFlag);
 /*******************************************************************************
  *                                Gulp Tasks
  ******************************************************************************/
@@ -177,10 +179,16 @@ gulp.task('build-js', function(){
 });
 
 gulp.task('build-img', function(){
-	gulp.src('assets/images/*')
-		.pipe(sort())
-    .pipe(imagemin())
-    .pipe(gulp.dest('assets/images'));
+  diff_files( "A", IMG_SRC, function( err, files ){
+    if (err) return err;
+
+	  return gulp.src( files )
+		  .pipe(sort())
+      .pipe(imagemin())
+      .pipe(gulp.dest(function (file) {
+        return file.base;
+     	}));
+  });
 });
 
 /**
@@ -188,7 +196,7 @@ gulp.task('build-img', function(){
  *
  * CMD: gulp build
  */
-gulp.task('build', [ 'build-sass','build-js' ] );
+gulp.task('build', [ 'build-sass','build-js', 'build-img' ] );
 
 gulp.task('build-full', ['translate', 'build-sass','build-js', 'build-img', 'phpcbf', 'phpcs'] );
 
@@ -318,10 +326,10 @@ gulp.task('base-dir', function( cb ){
 });
 
 gulp.task('phpcbf', ['base-dir'], function(){
-	diff_files( function( err, files ){
+	return diff_files( "ACM", "'*.php'", function( err, files ){
     if (err) return err;
 
-		return gulp.src(files)
+		gulp.src(files)
 			.pipe(phpcbf({
 				bin: base_dir +'/vendor/bin/phpcbf'
 			}))
@@ -333,7 +341,7 @@ gulp.task('phpcbf', ['base-dir'], function(){
 });
 
 gulp.task('phpcs', ['base-dir'], function () {
-	diff_files( function( err, files ){
+	diff_files( "ACM", "'*.php'", function( err, files ){
 		if( err ){ throw err; }
 
 		return gulp.src( files )
@@ -460,8 +468,15 @@ function download_file( url, path, opts, cb ){
 	 .pipe(fs.createWriteStream( path, opts).on('finish', cb ));
 }
 
-function diff_files( callback ){
-	exec('git diff --name-only --cached --diff-filter=ACM -- \'*.php\'', {cwd: process.cwd()}, function(err, stdout) {
+function diff_files( filter, path, callback ){
+  let command = 'git diff --name-only ';
+
+  if( stagedFlag ){
+    command += '--cached ';
+  }
+  command += '--diff-filter=' + filter + ' -- ' + path;
+
+	exec( command, {cwd: process.cwd()}, function(err, stdout) {
 		if (err) return callback(err);
 
 		return callback( null, stdout.trim().split("\n") );
