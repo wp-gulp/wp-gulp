@@ -458,7 +458,7 @@ function download_file( url, path, opts, cb ){
 }
 
 function diff_files( callback ){
-	exec('git diff --name-only --diff-filter=ACM -- \'*.php\'', {cwd: process.cwd()}, function(err, stdout) {
+	exec('git diff --name-only --cached --diff-filter=ACM -- \'*.php\'', {cwd: process.cwd()}, function(err, stdout) {
 		if (err) return callback(err);
 
 		return callback( null, stdout.trim().split("\n") );
