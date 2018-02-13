@@ -188,7 +188,10 @@ gulp.task('build-img', function(){
  *
  * CMD: gulp build
  */
-gulp.task('build', ['translate', 'build-sass','build-js', 'build-img', 'phpcbf', 'phpcs'] );
+gulp.task('build', [ 'build-sass','build-js' ] );
+
+gulp.task('build-full', ['translate', 'build-sass','build-js', 'build-img', 'phpcbf', 'phpcs'] );
+
 
 /**
  * Creates a zip file of the current project without any of the config and dev
