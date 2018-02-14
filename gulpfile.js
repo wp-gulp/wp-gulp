@@ -71,8 +71,7 @@ if( 'plugin' === CONTENT_TYPE){
 }
 
 // Image src and dest.
-var IMG_SRC  = 'assets/images/*',	
-    IMG_DEST = 'assets/images';	
+var IMG_SRC  = 'assets/images/*';	
 
 // Zip src and options.
 var ZIP_SRC_ARR = [
@@ -185,7 +184,9 @@ gulp.task('build-img', function(){
 	  return gulp.src( files )
 		  .pipe(sort())
       .pipe(imagemin())
-      .pipe(gulp.dest(IMG_DEST));
+      .pipe(gulp.dest(function (file) {
+        return file.base;
+    	}));
   });
 });
 
