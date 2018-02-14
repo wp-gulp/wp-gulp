@@ -39,14 +39,15 @@ var gulp      = require('gulp'),
     // const gcPub = require('gulp-gcloud');
     // var pxtorem = require('gulp-pxtorem');
 
-// me.js contains vars to your specific setup
+var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/usr/local/bin' });
+var stagedFlag = ( argv.staged === undefined) ? false : true;
+
 if( ! fs.existsSync('./gulpconf.js' ) ){
-	console.log('Please create gulpconf.js file by running. '.red + '"npm install"'.yellow );
-	process.exit();
+	log('Warning!'.red + ' gulpconf.js not found. Please run ' + '`npm run config` '.yellow + 'before proceeding ' );
+  process.exit(1);
 }
 
 var me = require('./gulpconf.js');
-var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/usr/local/bin' });
 
 var WEBSITE   = me.WEBSITE;
 var CONTENT_TYPE = me.CONTENT_TYPE;
@@ -70,8 +71,8 @@ if( 'plugin' === CONTENT_TYPE){
 }
 
 // Image src and dest.
-var IMG_SRC  = 'assets/images/*',
-		IMG_DEST = 'assets/images';
+var IMG_SRC  = 'assets/images/*',	
+    IMG_DEST = 'assets/images';	
 
 // Zip src and options.
 var ZIP_SRC_ARR = [
@@ -96,8 +97,7 @@ var ZIP_OPTS = { base: '..' };
 
 // PHP Source.
 var PHP_SRC = '**/*.php';
-var stagedFlag = ( argv.staged === undefined) ? false : true;
-console.log(stagedFlag);
+
 /*******************************************************************************
  *                                Gulp Tasks
  ******************************************************************************/
@@ -179,27 +179,27 @@ gulp.task('build-js', function(){
 });
 
 gulp.task('build-img', function(){
-  diff_files( "A", IMG_SRC, function( err, files ){
+  diff_files( "AM", IMG_SRC, function( err, files ){
     if (err) return err;
 
 	  return gulp.src( files )
 		  .pipe(sort())
       .pipe(imagemin())
-      .pipe(gulp.dest(function (file) {
-        return file.base;
-     	}));
+      .pipe(gulp.dest(IMG_DEST));
   });
 });
 
 /**
- * Executes all of the build tasks at once.
+ * Executes basic build tasks at once.
  *
  * CMD: gulp build
  */
 gulp.task('build', [ 'build-sass','build-js', 'build-img' ] );
 
+/**
+ * Run full build process.
+ */
 gulp.task('build-full', ['translate', 'build-sass','build-js', 'build-img', 'phpcbf', 'phpcs'] );
-
 
 /**
  * Creates a zip file of the current project without any of the config and dev
@@ -279,6 +279,11 @@ gulp.task('tag',['current_version', 'current_branch'], function(){
     }));
 })
 
+/**
+ * Get current version of plugin or theme.
+ * 
+ * @param  {Function} cb Callback function.
+ */
 gulp.task('current_version', function( cb ){
 	let pattern = ('plugin' === CONTENT_TYPE) ? '*.php' : 'style.css';
 
@@ -299,6 +304,11 @@ gulp.task('current_version', function( cb ){
 	});
 })
 
+/**
+ * Get the current branch from git.
+ * 
+ * @param  {Function} cb Callback function
+ */
 gulp.task('current_branch', function( cb ){
 	git.revParse({args:'--abbrev-ref HEAD', quiet:true}, function (err, hash) {
 		if (err){
@@ -312,6 +322,11 @@ gulp.task('current_branch', function( cb ){
 	});
 });
 
+/**
+ * Get the name of the projects base directory.
+ * 
+ * @param  {Function} cb Callback function.
+ */
 gulp.task('base-dir', function( cb ){
 	git.revParse({args:'--show-toplevel', quiet:true}, function (err, dir) {
 		if (err){
@@ -325,6 +340,9 @@ gulp.task('base-dir', function( cb ){
 	});
 });
 
+/**
+ * Run PHP Code beautifier.
+ */
 gulp.task('phpcbf', ['base-dir'], function(){
 	return diff_files( "ACM", "'*.php'", function( err, files ){
     if (err) return err;
@@ -340,6 +358,9 @@ gulp.task('phpcbf', ['base-dir'], function(){
   });
 });
 
+/**
+ * Run PHP Code Sniffer.
+ */
 gulp.task('phpcs', ['base-dir'], function () {
 	diff_files( "ACM", "'*.php'", function( err, files ){
 		if( err ){ throw err; }
@@ -372,6 +393,9 @@ gulp.task('release', ['current_version','current_branch'], function(cb) {
     }));
 });
 
+/**
+ * Create the .pot file for translations.
+ */
 gulp.task('translate', function(){
   return gulp.src( PHP_SRC )
         .pipe(wpPot( ))
@@ -382,7 +406,8 @@ gulp.task('translate', function(){
  *                                Functions
  ******************************************************************************/
  /**
-  * [git_bump description]
+  * Bump version number.
+  * 
   * @param  {[type]}   bump     [description]
   * @param  {Function} callback [description]
   * @return {[type]}            [description]
@@ -468,6 +493,13 @@ function download_file( url, path, opts, cb ){
 	 .pipe(fs.createWriteStream( path, opts).on('finish', cb ));
 }
 
+/**
+ * Run git diff on project files.
+ * 
+ * @param  {String}   filter   String to use on the --diff-filter
+ * @param  {String}   path     Path to files to run diff on.
+ * @param  {Function} callback Callback function.
+ */
 function diff_files( filter, path, callback ){
   let command = 'git diff --name-only ';
 
