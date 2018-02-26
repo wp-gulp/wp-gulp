@@ -52,7 +52,7 @@ var me = require('./gulpconf.js');
 var WEBSITE   = me.WEBSITE;
 var CONTENT_TYPE = me.CONTENT_TYPE;
 var BASE_NAME = __dirname.match(/([^\/]*)\/*$/)[1];
-const TAG_REGEX = /^[ \t\/*#@]*version:(.*)$/mi;
+const TAG_REGEX = /^([ \t\/*#@]*version(: |:| |))(.*)$/mi;
 
 // JS source, destination, and excludes.
 var JS_EXCLD  = '!assets/js/*.min.js',
@@ -71,7 +71,7 @@ if( 'plugin' === CONTENT_TYPE){
 }
 
 // Image src and dest.
-var IMG_SRC  = 'assets/images/*';	
+var IMG_SRC  = 'assets/images/*';
 
 // Zip src and options.
 var ZIP_SRC_ARR = [
@@ -282,7 +282,7 @@ gulp.task('tag',['current_version', 'current_branch'], function(){
 
 /**
  * Get current version of plugin or theme.
- * 
+ *
  * @param  {Function} cb Callback function.
  */
 gulp.task('current_version', function( cb ){
@@ -294,9 +294,9 @@ gulp.task('current_version', function( cb ){
 		}
     for (var i=0; i<items.length; i++) {
 			head = shell.head( {'-n':30}, items[i] );
-			found = head.match( TAG_REGEX )
+			found = head.match( TAG_REGEX );
 			if( null !== found ){
-				current_version = found[1];
+				current_version = found[3];
 				base_file = items[i];
 				log(('Current version: ' + current_version).green );
 				return cb();
@@ -307,7 +307,7 @@ gulp.task('current_version', function( cb ){
 
 /**
  * Get the current branch from git.
- * 
+ *
  * @param  {Function} cb Callback function
  */
 gulp.task('current_branch', function( cb ){
@@ -325,7 +325,7 @@ gulp.task('current_branch', function( cb ){
 
 /**
  * Get the name of the projects base directory.
- * 
+ *
  * @param  {Function} cb Callback function.
  */
 gulp.task('base-dir', function( cb ){
@@ -408,21 +408,33 @@ gulp.task('translate', function(){
  ******************************************************************************/
  /**
   * Bump version number.
-  * 
+  *
   * @param  {[type]}   bump     [description]
   * @param  {Function} callback [description]
   * @return {[type]}            [description]
   */
 function git_bump(bump,callback){
-	new_version = semver.inc( current_version, bump )
-	shell.sed( '-i', TAG_REGEX, '* Version: ' + new_version, base_file );
-	log(('New version: ' + new_version).green );
+  new_version = semver.inc( current_version, bump )
 
-	gulp.src( '.' )
-		.pipe(git.add({args: '--all'}))
-		.pipe(git.commit('Bumping version number',function(){
-			return callback(null, current_branch);
-		}));
+  fs.readFile(base_file, 'utf8', function(err, data){
+    if( err ){
+      return console.log(err);
+    }
+
+    var result = data.replace( TAG_REGEX, '$1' + new_version );
+
+    fs.writeFile(base_file, result, 'utf8', function(err){
+      if(err)return console.log(err);
+    });
+  });
+
+  log(('New version: ' + new_version).green );
+
+  gulp.src( '.' )
+  .pipe(git.add({args: '--all'}))
+  .pipe(git.commit('Bumping version number',function(){
+    return callback(null, current_branch);
+  }));
 }
 
 /**
@@ -435,7 +447,19 @@ function git_tag(callback){
 		if (err){
 			console.error( (err.message).red );
 			console.error( 'Reverting changes...'.yellow );
-			shell.sed( '-i', TAG_REGEX, ' * Version: ' + current_version, base_file );
+
+      fs.readFile(base_file, 'utf8', function(err, data){
+        if( err ){
+          return console.log(err);
+        }
+
+        var result = data.replace( TAG_REGEX, '$1' + new_version );
+
+        fs.writeFile(base_file, result, 'utf8', function(err){
+          if(err)return console.log(err);
+        });
+      });
+      
 			return callback(err)
 		}
 		else{
@@ -496,7 +520,7 @@ function download_file( url, path, opts, cb ){
 
 /**
  * Run git diff on project files.
- * 
+ *
  * @param  {String}   filter   String to use on the --diff-filter
  * @param  {String}   path     Path to files to run diff on.
  * @param  {Function} callback Callback function.
