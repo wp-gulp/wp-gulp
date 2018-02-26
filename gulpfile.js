@@ -286,7 +286,7 @@ gulp.task('tag',['current_version', 'current_branch'], function(){
  * @param  {Function} cb Callback function.
  */
 gulp.task('current_version', function( cb ){
-	let pattern = ('plugin' === CONTENT_TYPE) ? '*.php' : 'style.css';
+	let pattern = ('plugin' === CONTENT_TYPE) ? '*.php' : 'assets/scss/style.scss';
 
 	 glob( pattern , function(err, items) {
 		if (err){
