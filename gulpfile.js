@@ -416,25 +416,16 @@ gulp.task('translate', function(){
 function git_bump(bump,callback){
   new_version = semver.inc( current_version, bump )
 
-  fs.readFile(base_file, 'utf8', function(err, data){
-    if( err ){
-      return console.log(err);
-    }
+  update_version( base_file, new_version, function(){
+    log(('New version: ' + new_version).green );
 
-    var result = data.replace( TAG_REGEX, '$1' + new_version );
-
-    fs.writeFile(base_file, result, 'utf8', function(err){
-      if(err)return console.log(err);
-    });
+    gulp.src( '.' )
+    .pipe(git.add({args: '--all'}))
+    .pipe(git.commit('Bumping version number',function(){
+      return callback(null, current_branch);
+    }));
   });
 
-  log(('New version: ' + new_version).green );
-
-  gulp.src( '.' )
-  .pipe(git.add({args: '--all'}))
-  .pipe(git.commit('Bumping version number',function(){
-    return callback(null, current_branch);
-  }));
 }
 
 /**
@@ -447,20 +438,10 @@ function git_tag(callback){
 		if (err){
 			console.error( (err.message).red );
 			console.error( 'Reverting changes...'.yellow );
-
-      fs.readFile(base_file, 'utf8', function(err, data){
-        if( err ){
-          return console.log(err);
-        }
-
-        var result = data.replace( TAG_REGEX, '$1' + new_version );
-
-        fs.writeFile(base_file, result, 'utf8', function(err){
-          if(err)return console.log(err);
-        });
-      });
       
-			return callback(err)
+      update_version( base_file, current_version, function(){
+			   return callback(err)
+      });
 		}
 		else{
 			return callback(null, '--tags')
@@ -538,4 +519,19 @@ function diff_files( filter, path, callback ){
 
 		return callback( null, stdout.trim().split("\n") );
 	});
+}
+
+function update_version( file, version, cb ){
+  fs.readFile(file, 'utf8', function(err, data){
+    if( err ){
+      return cb(err);
+    }
+
+    var result = data.replace( TAG_REGEX, '$1' + version );
+
+    fs.writeFile(file, result, 'utf8', function(err){
+      if(err)return cb( err );
+      return cb();
+    });
+  });
 }
