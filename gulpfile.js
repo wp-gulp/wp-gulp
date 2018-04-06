@@ -55,8 +55,8 @@ var BASE_NAME = __dirname.match(/([^\/]*)\/*$/)[1];
 const TAG_REGEX = /^([ \t\/*#@]*version(: |:| |))(.*)$/mi;
 
 // JS source, destination, and excludes.
-var JS_EXCLD  = '!assets/js/*.min.js',
-    JS_SRC    = 'assets/js/*.js',
+var JS_EXCLD  = '!assets/js/{*.min.js,**/*.min.js}',
+    JS_SRC    = 'assets/js/{*.js,**/*.js}',
     JS_DEST   = 'assets/js/';
 
 // CSS and SASS src, dest, and exclude.
