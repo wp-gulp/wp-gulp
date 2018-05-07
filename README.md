@@ -6,6 +6,7 @@ A ready-made gulpfile for WordPress Theme & Plugin development
 [![Issue Count](https://codeclimate.com/repos/58cd6b61ac2b9a753f000813/badges/e1c504fb8004cf46b792/issue_count.svg)](https://codeclimate.com/repos/58cd6b61ac2b9a753f000813/feed)
 
 ## Installation
+Requires node 8 or above.
 #### Manual
 Download both the gulpfile.js and package.json files and place them at the base directory of the plugin or theme you are developing. 
  - i.e) wordpress/wp-content/plugins/your-plugin/{place-files-here}
