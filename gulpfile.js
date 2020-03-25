@@ -1,6 +1,6 @@
 // Require all dev dependencies.
 var gulp      = require('gulp'),
-    watch     = require('gulp-watch'),
+    //watch     = require('gulp-watch'),
     rename    = require('gulp-rename'),
     // CSS modules.
     cleanCSS  = require('gulp-clean-css'),
@@ -17,27 +17,23 @@ var gulp      = require('gulp'),
     // Utility modules.
     argv      = require('yargs').argv,
     zip       = require('gulp-zip'),
-		prompt 	  = require('gulp-prompt'),
-		git 	    = require('gulp-git'),
-		request   = require('request'),
-		semver    = require('semver'), // Versioning standard - http://semver.org/
-		fs        = require('fs'),
-		asynclib  =  require('async'),
-		colors    = require('colors'),
-		glob	    = require('glob'),
+  	prompt 	  = require('gulp-prompt'),
+	git 	  = require('gulp-git'),
+  	request   = require('request'),
+  	semver    = require('semver'), // Versioning standard - http://semver.org/
+	fs        = require('fs'),
+	asynclib  =  require('async'),
+	colors    = require('colors'),
+	glob	     = require('glob'),
     browserSync  = require('browser-sync').create(),
-		sourcemaps   = require('gulp-sourcemaps'),
-		phpcbf = require('gulp-phpcbf'),
-		phpcs = require('gulp-phpcs'),
-		clean = require('gulp-clean'),
+	sourcemaps   = require('gulp-sourcemaps'),
+	phpcbf = require('gulp-phpcbf'),
+	phpcs = require('gulp-phpcs'),
+	del = require('del'),
     log = require('fancy-log'),
     shell     = require('shelljs'),
     spawn_shell  = require('spawn-shell'),
     exec = require('child_process').exec;
-
-    // var reporter = reuqire('gulp-codeclimate-reporter');
-    // const gcPub = require('gulp-gcloud');
-    // var pxtorem = require('gulp-pxtorem');
 
 var environment = Object.assign({}, process.env, { PATH: process.env.PATH + ':/usr/local/bin' });
 var stagedFlag = ( argv.staged === undefined) ? false : true;
@@ -77,7 +73,7 @@ var IMG_SRC  = 'assets/images/*';
 var ZIP_SRC_ARR = [
   './**',
   '!**/composer.*',
-	'!**/gulpfile.js',
+  '!**/gulpfile.js',
   '!**/gulpconf.js',
   '!**/package.json',
   '!**/README.md',
@@ -88,7 +84,7 @@ var ZIP_SRC_ARR = [
   '!**/{node_modules,node_modules/**}',
   '!**/{bin,bin/**}',
   '!**/{dist,dist/**}',
-	'!**/{vendor,vendor/**}',
+  '!**/{vendor,vendor/**}',
   '!**/{docs,docs/**}',
   '!**/{tests,tests/**}'
 ];
@@ -113,50 +109,11 @@ gulp.task('default', function() {
     proxy: WEBSITE
   });
 
-  gulp.watch( SASS_SRC, ['build-sass']);
-  gulp.watch( JS_SRC , ['js-watch']);
+  gulp.watch( SASS_SRC, gulp.series('build_sass'));
+  gulp.watch( JS_SRC , gulp.series('js-watch' ));
   gulp.watch( PHP_SRC, function(){
     browserSync.reload();
   });
-});
-
-/**
- * JS Watch task. This is a dependency task for the default gulp task that
- * builds the js files and reloads the browser in the correct order
- *
- * CMD: None. Not meant to be run as standalone command.
- */
-gulp.task('js-watch', ['build-js'], function(){
-  browserSync.reload();
-});
-
-/**
- * Compiles SCSS into regular CSS.
- *
- * CMD: gulp build-sass
- */
-gulp.task('build-sass', function() {
-  gulp.src( SASS_SRC )
-		.pipe(sort())
-		.pipe(sourcemaps.init())
-    .pipe(sass().on('error', sass.logError))
-		.pipe(postcss([
-      autoprefixer({browsers: ['> 5% in US']})
-    ]))
-    .pipe(cleanCSS({compatibility: 'ie8'}))
-		.pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(CSS_DEST));
-
-	gulp.src( 'assets/scss/style.scss' )
-		.pipe(sourcemaps.init())
-	  .pipe(sass().on('error', sass.logError))
-		.pipe(postcss([
-      autoprefixer({browsers: ['> 5% in US']})
-    ]))
-    .pipe(cleanCSS({compatibility: 'ie8'}))
-		.pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest('.'))
-    .pipe(browserSync.stream());
 });
 
 /**
@@ -165,29 +122,82 @@ gulp.task('build-sass', function() {
  * CMD: gulp build-js
  */
 gulp.task('build-js', function(){
-  gulp.src( [ JS_SRC, JS_EXCLD ] )
-		.pipe(sort())
-    .pipe(minify({
-      ext:{
-        src:'.js',
-        min:'.min.js'
-      },
-      noSource: true
-    }))
-    .pipe(gulp.dest( JS_DEST ));
+	return gulp.src( [ JS_SRC, JS_EXCLD ] )
+		  .pipe(sort())
+	  .pipe(minify({
+		ext:{
+		  src:'.js',
+		  min:'.min.js'
+		},
+		noSource: true
+	  }))
+	  .pipe(gulp.dest( JS_DEST ));
+  });
+
+/**
+ * JS Watch task. This is a dependency task for the default gulp task that
+ * builds the js files and reloads the browser in the correct order
+ *
+ * CMD: None. Not meant to be run as standalone command.
+ */
+gulp.task('js-watch', gulp.series('build-js', () =>{
+  browserSync.reload();
+}));
+
+/**
+ * Compiles SCSS into regular CSS.
+ *
+ * CMD: gulp build_sass
+ */
+gulp.task('build_sass',() => {
+   return gulp.src( SASS_SRC )
+	.pipe(sort())
+	.pipe(sourcemaps.init())
+    .pipe(sass().on('error', sass.logError))
+	.pipe(postcss([
+      autoprefixer()
+    ]))
+    .pipe(cleanCSS({compatibility: 'ie8'}))
+	.pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(CSS_DEST));
 });
 
-gulp.task('build-img', function(){
-  diff_files( "AM", IMG_SRC, function( err, files ){
-    if (err) return err;
+gulp.task( 'build-theme-sass', (done)=>{
+  if( 'theme' === CONTENT_TYPE && fs.existsSync('assets/scss/style.scss' ) ){
+   return gulp.src( 'assets/scss/style.scss' )
+      .pipe(sourcemaps.init())
+      .pipe(sass().on('error', sass.logError))
+      .pipe(postcss([
+        autoprefixer()
+      ]))
+      .pipe(cleanCSS({compatibility: 'ie8'}))
+      .pipe(sourcemaps.write('.'))
+      .pipe(gulp.dest('.'))
+      .pipe(browserSync.stream());
+  }else{
+    done();
+  }
+});
 
-	  return gulp.src( files )
-		  .pipe(sort())
-      .pipe(imagemin())
-      .pipe(gulp.dest(function (file) {
-        return file.base;
-    	}));
-  });
+
+gulp.task('build-img', function(done){
+ 
+  return diff_files( "AM", IMG_SRC, function( err, files ){
+    if (err) return err;
+	
+	// Only run imagemin if files have been added.
+	if( Array.isArray(files) && '' !== files[0]  ){
+		gulp.src( files )
+			.pipe(sort())
+			.pipe(imagemin())
+			.pipe(gulp.dest(function (file) {
+				done();
+				return file.base;
+			}));
+	}else{
+		done();
+	}
+  });	
 });
 
 /**
@@ -195,12 +205,16 @@ gulp.task('build-img', function(){
  *
  * CMD: gulp build
  */
-gulp.task('build', [ 'build-sass','build-js', 'build-img' ] );
+gulp.task('build', gulp.series( gulp.parallel('build_sass', 'build-theme-sass' ),'build-js', 'build-img' ) );
 
 /**
- * Run full build process.
+ * Create the .pot file for translations.
  */
-gulp.task('build-full', ['translate', 'build-sass','build-js', 'build-img', 'phpcbf', 'phpcs'] );
+gulp.task('translate', function(){
+	return gulp.src( PHP_SRC )
+		  .pipe(wpPot( ))
+		  .pipe(gulp.dest('languages/'+BASE_NAME+'.pot'));
+  })
 
 /**
  * Creates a zip file of the current project without any of the config and dev
@@ -212,20 +226,6 @@ gulp.task('zip', function(){
   return gulp.src( ZIP_SRC_ARR, ZIP_OPTS )
     .pipe( zip( BASE_NAME + '.zip' ) )
     .pipe( gulp.dest('dist') );
-});
-
-/**
- * Initializes dev dependencies.
- */
-gulp.task('init', ['init-git-hooks'] );
-
-gulp.task('init-git-hooks', ['wp-enforcer'], function(cb){
-	download_file( 'https://gist.githubusercontent.com/sfgarza/32258b7332a715de4e3948892ba415d3/raw', '.git/hooks/pre-commit', { mode: 0o755 }, function(){
-		download_file( 'https://gist.githubusercontent.com/sfgarza/a515ceffa2f414adbb95f556fcfbce34/raw', '.git/hooks/post-merge', { mode: 0o755 }, function(){
-			log('Git Hooks installed');
-			return cb();
-		} );
-	} );
 });
 
 /**
@@ -244,41 +244,20 @@ gulp.task('composer-update', function(cb) {
   return shell_exec('composer update', cb );
 });
 
+
+
+gulp.task('clean', function(){
+	return del(['./dist/*', '.git/hooks/+(post-merge|pre-commit)' ]);
+});
+
 /**
  * Installs wp-enforcer
  */
-gulp.task('wp-enforcer', ['clean', 'composer-install'], function(cb){
+gulp.task('wp-enforcer', gulp.series('clean', 'composer-install', function(cb){
 	return shell_exec('./vendor/bin/wp-enforcer', cb );
-});
+}));
 
-gulp.task('clean', function(){
-	return gulp.src(['./dist/*', '.git/hooks/+(post-merge|pre-commit)' ], { read: false })
-			 .pipe(clean());
-});
 
-gulp.task('tag',['current_version', 'current_branch'], function(){
-	gulp.src( base_file )
-    .pipe(prompt.prompt({
-        type: 'list',
-        name: 'bump',
-        message: 'What kind of release would you like to make?',
-        choices: ['patch', 'minor', 'major']
-    }, function(res){
-			asynclib.waterfall([
-	      function(callback){
-	        callback(null, res.bump);
-	      },
-	      git_bump,
-				git_push,
-				git_tag,
-				git_push
-	    ], function (err, result) {
-	      if( null !== err ){
-	        log('ERROR: %j', err);
-	      }
-	    });
-    }));
-})
 
 /**
  * Get current version of plugin or theme.
@@ -323,6 +302,31 @@ gulp.task('current_branch', function( cb ){
 	});
 });
 
+gulp.task('tag',gulp.series('current_version', 'current_branch', function(){
+	gulp.src( base_file )
+    .pipe(prompt.prompt({
+        type: 'list',
+        name: 'bump',
+        message: 'What kind of release would you like to make?',
+        choices: ['patch', 'minor', 'major']
+    }, function(res){
+			asynclib.waterfall([
+	      function(callback){
+	        callback(null, res.bump);
+	      },
+	      git_bump,
+				git_push,
+				git_tag,
+				git_push
+	    ], function (err, result) {
+	      if( null !== err ){
+	        log('ERROR: %j', err);
+	      }
+	    });
+    }));
+}));
+
+
 /**
  * Get the name of the projects base directory.
  *
@@ -344,42 +348,51 @@ gulp.task('base-dir', function( cb ){
 /**
  * Run PHP Code beautifier.
  */
-gulp.task('phpcbf', ['base-dir'], function(){
+gulp.task('phpcbf', gulp.series('base-dir', function(done){
 	return diff_files( "ACM", "'*.php'", function( err, files ){
-    if (err) return err;
-
-		gulp.src(files)
-			.pipe(phpcbf({
-				bin: base_dir +'/vendor/bin/phpcbf'
-			}))
-			.on('error', console.error )
-			.pipe(gulp.dest(function (file) {
-        return file.base;
-    	}));
-  });
-});
+    	if (err) return err;
+	
+		if( Array.isArray(files) && '' !== files[0]  ){
+			gulp.src(files)
+				.pipe(phpcbf({
+					bin: base_dir +'/vendor/bin/phpcbf'
+				}))
+				.on('error', console.error )
+				.pipe(gulp.dest(function (file) {
+					done();
+        			return file.base;
+				}));
+		}else{
+			done();
+		}
+  	});
+}));
 
 /**
  * Run PHP Code Sniffer.
  */
-gulp.task('phpcs', ['base-dir'], function () {
+gulp.task('phpcs', gulp.series('base-dir', function (done) {
 	diff_files( "ACM", "'*.php'", function( err, files ){
 		if( err ){ throw err; }
-
-		return gulp.src( files )
-        // Validate files using PHP Code Sniffer
-        .pipe(phpcs({
-            bin: base_dir +'/vendor/bin/phpcs'
-        }))
-        // Log all problems that was found
-        .pipe(phpcs.reporter('log'));
+		if( Array.isArray(files) && '' !== files[0]  ){
+			return gulp.src( files )
+        			// Validate files using PHP Code Sniffer
+        			.pipe(phpcs({
+            			bin: base_dir +'/vendor/bin/phpcs'
+        			}))
+        			// Log all problems that was found
+        			.pipe(phpcs.reporter('log'));
+		}else{
+			done();
+		}
+		
 	});
-});
+}));
 
 /**
  * Uploads a release to github.
  */
-gulp.task('release', ['current_version','current_branch'], function(cb) {
+gulp.task('release', gulp.series('current_version','current_branch', function(cb) {
 
 	gulp.src( base_file )
     .pipe(prompt.prompt({
@@ -392,16 +405,26 @@ gulp.task('release', ['current_version','current_branch'], function(cb) {
 				 return shell_exec( "npm run release "  + res.bump , cb );
 			 });
     }));
+}));
+
+gulp.task('init-git-hooks', gulp.series('wp-enforcer'), function(cb){
+	download_file( 'https://gist.githubusercontent.com/sfgarza/32258b7332a715de4e3948892ba415d3/raw', '.git/hooks/pre-commit', { mode: 0o755 }, function(){
+		download_file( 'https://gist.githubusercontent.com/sfgarza/a515ceffa2f414adbb95f556fcfbce34/raw', '.git/hooks/post-merge', { mode: 0o755 }, function(){
+			log('Git Hooks installed');
+			return cb();
+		} );
+	} );
 });
 
 /**
- * Create the .pot file for translations.
+ * Initializes dev dependencies.
  */
-gulp.task('translate', function(){
-  return gulp.src( PHP_SRC )
-        .pipe(wpPot( ))
-        .pipe(gulp.dest('languages/'+BASE_NAME+'.pot'));
-})
+gulp.task('init', gulp.series('init-git-hooks') );
+
+/**
+ * Run full build process.
+ */
+gulp.task('build-full', gulp.series('translate', gulp.parallel('build_sass', 'build-theme-sass' ),'build-js', 'build-img', 'phpcbf', 'phpcs' ) );
 
 /*******************************************************************************
  *                                Functions

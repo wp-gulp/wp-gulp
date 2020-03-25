@@ -2,7 +2,7 @@
   "name": "WP-Gulp",
   "author": "wp-gulp",
   "description": "Gulp script for Developing WordPress Plugins & Themes",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "gulpScriptVersion": "1.1.1",
   "license": "GPL-2.0",
   "repository": {
@@ -41,7 +41,7 @@
     "gulp-watch": "^5.0.0",
     "gulp-wp-pot": "^2.3.1",
     "gulp-zip": "^4.1.0",
-    "imforza-cli": "^1.0.20",
+    "imforza-cli": "^1.0.22",
     "release-it": "^7.4.3",
     "request": "^2.85.0",
     "semver": "^5.5.0",
