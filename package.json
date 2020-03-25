@@ -3,7 +3,7 @@
   "author": "wp-gulp",
   "description": "Gulp script for Developing WordPress Plugins & Themes",
   "version": "2.0.0",
-  "gulpScriptVersion": "1.1.1",
+  "gulpScriptVersion": "2.0.0",
   "license": "GPL-2.0",
   "repository": {
     "type": "git",
