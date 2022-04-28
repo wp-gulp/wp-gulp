@@ -17,7 +17,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "async": "^2.6.0",
+    "async": "^2.6.4",
     "autoprefixer": "^9.x.x",
     "browser-sync": "^2.x.x",
     "colors": "^1.x.x",
