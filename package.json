@@ -40,7 +40,7 @@
     "gulp-wp-pot": "^2.3.x",
     "gulp-zip": "^5.0.x",
     "imforza-cli": "^1.0.22",
-    "release-it": "^13.3.0",
+    "release-it": "^13.7.2",
     "request": "^2.85.0",
     "semver": "^7.1.x",
     "shelljs": "^0.8.x",
